@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biblioteca Digital - Catálogo y préstamos de libros</title>
+  <meta name="description" content="Biblioteca digital para gestionar un catálogo de libros: busca, presta, devuelve, agrega y edita ejemplares con historial de préstamos.">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="Estudiante de Programación Web">
+  <meta name="theme-color" content="#17603f">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="estilos.css">
+  <script src="logica.js" defer></script>
+  <script src="ui.js" defer></script>
+</head>
+<body>
+  <a class="salto" href="#contenido">Saltar al contenido</a>
+
+  <header class="encabezado">
+    <div class="marca">
+      <img src="logo.svg" alt="Logo de Biblioteca Digital: un libro abierto" width="40" height="40">
+      <h1 class="marca-nombre">Biblioteca Digital</h1>
+    </div>
+
+    <nav class="navegacion" aria-label="Navegación principal">
+      <ul class="menu">
+        <li><a class="menu-enlace" href="#catalogo" data-vista="catalogo">Catálogo</a></li>
+        <li><a class="menu-enlace" href="#prestamos" data-vista="prestamos" id="enlace-prestamos">Mis préstamos (0)</a></li>
+        <li><a class="menu-enlace" href="#formulario" data-vista="formulario">Agregar libro</a></li>
+        <li><a class="menu-enlace" href="#resumen" data-vista="resumen">Resumen y ajustes</a></li>
+      </ul>
+    </nav>
+
+    <p class="saludo" id="saludo"></p>
+  </header>
+
+  <main id="contenido" class="contenido">
+    <!-- Mensajes de la aplicación (éxitos y errores) escritos desde JavaScript -->
+    <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+
+    <!-- ========== VISTA 1: CATÁLOGO ========== -->
+    <section class="vista" id="vista-catalogo" data-vista="catalogo" aria-labelledby="titulo-catalogo">
+      <h2 id="titulo-catalogo">Catálogo de libros</h2>
+
+      <div class="controles">
+        <div class="campo">
+          <label for="busqueda">Buscar por título o autor</label>
+          <input type="search" id="busqueda" name="busqueda" placeholder="Escribe para buscar…" autocomplete="off">
+        </div>
+        <div class="campo">
+          <label for="filtro-genero">Género</label>
+          <select id="filtro-genero" name="genero">
+            <option value="">Todos los géneros</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="ordenar-por">Ordenar por</label>
+          <select id="ordenar-por" name="ordenar-por">
+            <option value="titulo">Título</option>
+            <option value="autor">Autor</option>
+            <option value="anio">Año</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="orden-direccion">Orden</label>
+          <select id="orden-direccion" name="orden-direccion">
+            <option value="asc">Ascendente</option>
+            <option value="desc">Descendente</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filtros" id="filtros-estado" role="group" aria-label="Filtrar por estado">
+        <button type="button" class="filtro activo" data-estado="todos" aria-pressed="true">Todos</button>
+        <button type="button" class="filtro" data-estado="disponibles" aria-pressed="false">Disponibles</button>
+        <button type="button" class="filtro" data-estado="prestados" aria-pressed="false">Prestados</button>
+      </div>
+
+      <p class="contador" id="contador" aria-live="polite"></p>
+
+      <div class="rejilla" id="lista-libros"></div>
+      <p class="vacio" id="catalogo-vacio" hidden>No hay libros que coincidan con los filtros.</p>
+    </section>
+
+    <!-- ========== VISTA 2: MIS PRÉSTAMOS ========== -->
+    <section class="vista" id="vista-prestamos" data-vista="prestamos" aria-labelledby="titulo-prestamos" hidden>
+      <h2 id="titulo-prestamos">Mis préstamos</h2>
+      <p class="ayuda">Se pueden tener como máximo 3 préstamos activos a la vez. Cada préstamo dura 14 días.</p>
+
+      <h3>Préstamos activos</h3>
+      <ul class="lista-prestamos" id="lista-prestamos"></ul>
+      <p class="vacio" id="prestamos-vacio" hidden>No hay ningún préstamo activo.</p>
+
+      <h3>Historial</h3>
+      <ul class="lista-prestamos" id="lista-historial"></ul>
+      <p class="vacio" id="historial-vacio" hidden>Todavía no hay préstamos devueltos.</p>
+    </section>
+
+    <!-- ========== VISTA 3: AGREGAR / EDITAR LIBRO ========== -->
+    <section class="vista" id="vista-formulario" data-vista="formulario" aria-labelledby="titulo-formulario" hidden>
+      <h2 id="titulo-formulario">Agregar libro</h2>
+
+      <form class="formulario" id="form-libro" novalidate>
+        <div class="campo">
+          <label for="campo-titulo">Título</label>
+          <input type="text" id="campo-titulo" name="titulo" autocomplete="off" aria-describedby="error-titulo">
+          <p class="error" id="error-titulo"></p>
+        </div>
+
+        <div class="campo">
+          <label for="campo-autor">Autor</label>
+          <input type="text" id="campo-autor" name="autor" autocomplete="off" aria-describedby="error-autor">
+          <p class="error" id="error-autor"></p>
+        </div>
+
+        <div class="campo">
+          <label for="campo-anio">Año de publicación</label>
+          <input type="number" id="campo-anio" name="anio" inputmode="numeric" aria-describedby="error-anio">
+          <p class="error" id="error-anio"></p>
+        </div>
+
+        <div class="campo">
+          <label for="campo-genero">Género</label>
+          <select id="campo-genero" name="genero" aria-describedby="error-genero">
+            <option value="">Selecciona un género</option>
+          </select>
+          <p class="error" id="error-genero"></p>
+        </div>
+
+        <div class="campo">
+          <label for="campo-comentario">Comentario (opcional)</label>
+          <textarea id="campo-comentario" name="comentario" rows="4" maxlength="120" aria-describedby="contador-comentario error-comentario"></textarea>
+          <p class="ayuda" id="contador-comentario">Quedan 120 caracteres</p>
+          <p class="error" id="error-comentario"></p>
+        </div>
+
+        <div class="campo campo-casilla">
+          <input type="checkbox" id="campo-coleccion" name="coleccion" aria-describedby="error-coleccion">
+          <label for="campo-coleccion">Ejemplar de colección (no se presta)</label>
+          <p class="error" id="error-coleccion"></p>
+        </div>
+
+        <div class="acciones">
+          <button type="submit" class="btn" id="btn-enviar">Agregar libro</button>
+          <button type="button" class="btn secundario" id="btn-cancelar-edicion" hidden>Cancelar</button>
+        </div>
+        <p class="ayuda">Consejo: pulsa <kbd>Esc</kbd> para limpiar el formulario o cancelar la edición.</p>
+      </form>
+    </section>
+
+    <!-- ========== VISTA 4: RESUMEN Y AJUSTES ========== -->
+    <section class="vista" id="vista-resumen" data-vista="resumen" aria-labelledby="titulo-resumen" hidden>
+      <h2 id="titulo-resumen">Resumen y ajustes</h2>
+
+      <div class="estadisticas" id="estadisticas"></div>
+
+      <h3>Libros por género</h3>
+      <ul class="lista-generos" id="resumen-generos"></ul>
+      <p class="vacio" id="generos-vacio" hidden>No hay libros registrados.</p>
+
+      <h3>Ajustes</h3>
+      <div class="ajustes">
+        <div class="ajuste">
+          <h4>Tema</h4>
+          <p class="ayuda" id="tema-actual"></p>
+          <button type="button" class="btn secundario" id="btn-tema">Cambiar tema</button>
+        </div>
+
+        <form class="ajuste" id="form-usuario" novalidate>
+          <h4>Tu nombre</h4>
+          <div class="campo">
+            <label for="campo-usuario">Nombre de usuario</label>
+            <input type="text" id="campo-usuario" name="usuario" maxlength="40" autocomplete="off" aria-describedby="error-usuario">
+            <p class="error" id="error-usuario"></p>
+          </div>
+          <button type="submit" class="btn">Guardar nombre</button>
+        </form>
+
+        <div class="ajuste">
+          <h4>Restablecer biblioteca</h4>
+          <p class="ayuda">Borra todo lo guardado y vuelve a los libros y préstamos iniciales.</p>
+          <button type="button" class="btn peligro" id="btn-restablecer">Restablecer biblioteca</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <p>Biblioteca Digital · Primer parcial de Programación Web</p>
+  </footer>
+
+  <!-- ========== MODAL: PRESTAR ========== -->
+  <div class="modal-fondo" id="modal-prestar" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-prestar-titulo">
+      <h2 id="modal-prestar-titulo">Prestar libro</h2>
+      <p id="modal-prestar-libro" class="ayuda"></p>
+      <form id="form-prestar" novalidate>
+        <div class="campo">
+          <label for="campo-persona">¿A quién se presta?</label>
+          <input type="text" id="campo-persona" name="persona" autocomplete="off" aria-describedby="error-persona">
+          <p class="error" id="error-persona"></p>
+        </div>
+        <div class="acciones">
+          <button type="button" class="btn secundario" id="cancelar-prestar">Cancelar</button>
+          <button type="submit" class="btn">Confirmar préstamo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== MODAL: CONFIRMAR ========== -->
+  <div class="modal-fondo" id="modal-confirmar" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-confirmar-titulo" aria-describedby="modal-confirmar-texto">
+      <h2 id="modal-confirmar-titulo">Confirmar acción</h2>
+      <p id="modal-confirmar-texto"></p>
+      <div class="acciones">
+        <button type="button" class="btn secundario" id="cancelar-confirmar">Cancelar</button>
+        <button type="button" class="btn peligro" id="aceptar-confirmar">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
